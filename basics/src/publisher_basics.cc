@@ -7,8 +7,9 @@ class PublisherNode : public rclcpp::Node
 public:
   PublisherNode(std::string&& name)
     : rclcpp::Node(std::move(name))
-  {
-    publisher_ = create_publisher<std_msgs::msg::String>("publish", 100);
+  { 
+    // 这个名字是 topic 的名字
+    publisher_ = create_publisher<std_msgs::msg::String>("string_test", 100);
     // publisher_timer_ = rclcpp::create_timer(std::bind(PublisherMsg, 10));
     publisher_timer_ =
         this->create_wall_timer(std::chrono::milliseconds(500),
