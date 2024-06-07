@@ -36,10 +36,19 @@ add_executable(subscriber_basics src/subscriber_basics.cc)
 target_compile_features(subscriber_basics PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 ament_target_dependencies(subscriber_basics ${dependencies})
 
+
+add_executable(param_basics src/param_basics.cc)
+# target_include_directories(basics PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+target_compile_features(param_basics PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(param_basics ${dependencies})
+
 install(TARGETS 
   basics
   publisher_basics
   subscriber_basics
+  param_basics
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
