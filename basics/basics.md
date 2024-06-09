@@ -73,10 +73,20 @@ ros2 launch package_name xxx_launch.py
 
 ### param
 
+在 ros2 中，为 node 添加的 parameters:
+
+1. 使用 declare_parameter 来声明参数的名字和默认值（使用参数类型的默认构造函数）。
+2. 使用 get_parameter 获取参数的值。
+
+
+
+可以在启动时提供参数的值：
 
 ```bash
 ros2 run basics param_basics --ros-args -p num_of_params:=2 -p topics_name:='[/sensor/carame, /sensor/lisar]' -p topics_type:='[sensor, sensor]'
 ```
+
+也可以将参数的值写到 launch 文件中
 
 
 
