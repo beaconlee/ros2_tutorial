@@ -5,23 +5,61 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
-add_executable(basics src/basics.cpp)
-target_include_directories(basics PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_features(basics PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-ament_target_dependencies(
-  basics
-  "rclcpp"
-  "std_msgs"
+set(dependencies 
+    rclcpp
+    std_msgs
 )
 
-install(TARGETS basics
+add_executable(basics src/basics.cc)
+# target_include_directories(basics PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+target_compile_features(basics PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(basics ${dependencies})
+
+add_executable(publisher_basics src/publisher_basics.cc)
+# target_include_directories(basics PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+target_compile_features(publisher_basics PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(publisher_basics ${dependencies})
+
+add_executable(subscriber_basics src/subscriber_basics.cc)
+# target_include_directories(basics PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+target_compile_features(subscriber_basics PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(subscriber_basics ${dependencies})
+
+
+add_executable(param_basics src/param_basics.cc)
+# target_include_directories(basics PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+target_compile_features(param_basics PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(param_basics ${dependencies})
+
+
+add_executable(executors src/executors.cc)
+# target_include_directories(basics PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+target_compile_features(executors PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(executors ${dependencies})
+
+install(TARGETS 
+  basics
+  publisher_basics
+  subscriber_basics
+  param_basics
+  executors
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
