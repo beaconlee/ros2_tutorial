@@ -46,7 +46,11 @@ public:
 private:
   void Sub(std_msgs::msg::String::SharedPtr stptr)
   {
+    // str.data 是一个 string 类型
+    // 将 string 类型转化为 char* 类型
     // std::string data = stptr->data;
+    // RCLCPP_INFO 最终会调用 rcutils_log 函数，这个函数期望接收一个 "const char*" 类型的字符串
+    // 然后使用格式化字符串"%s"来传递这个转换后的字符串。
     RCLCPP_INFO(get_logger(), "%s, %s", "this is sub", stptr->data.c_str());
   }
   // rclcpp::SubscriptionBase::SharedPtr subscription_;
