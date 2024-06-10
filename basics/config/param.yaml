@@ -1,0 +1,9 @@
+# 这个是 node 的名字，如果 node 的名字对不上也会报错
+# params_node:
+param_node:
+# 这里的缩进很严谨，之前这里没有缩进，就报错了
+# Error: Cannot have a value before ros__parameters at line 1,
+  ros__parameters:
+      num_of_params: 4
+      topics_name: [scan, image]
+      topics_type: [sensor_msgs/msg/LaserScan, sensor_msgs/msg/Image]
