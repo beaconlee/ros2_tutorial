@@ -71,6 +71,9 @@ install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ros2 launch package_name xxx_launch.py
 ```
 
+
+
+
 ### param
 
 在 ros2 中，为 node 添加的 parameters:
@@ -86,10 +89,88 @@ ros2 launch package_name xxx_launch.py
 ros2 run basics param_basics --ros-args -p num_of_params:=2 -p topics_name:='[/sensor/carame, /sensor/lisar]' -p topics_type:='[sensor, sensor]'
 ```
 
-也可以将参数的值写到 launch 文件中
+也可以将参数的值写到 launch 文件中：
+
+```python
+from launch import LaunchDescription
+from launch_ros.actions import Node
+
+def generate_launch_description():
+  param_node = Node(
+    package = "basics",
+    name = "param_node",
+    executable = "param_basics",
+
+    parameters = [{
+            'num_of_params': 300,
+            'topics_name': ['scan', 'image'],
+            'topics_type': ['sensor_msgs/msg/LaserScan', 'sensor_msgs/msg/Image']
+        }],
+  )
+
+  ld = LaunchDescription()
+  ld.add_action(param_node)
+
+  return ld
+```
+
+在 launch 文件中，可以采用更容易理解和维护的参数加载方式：将参数存放到一个配置文件中，配置文件存放于 config，目录下，使用 yaml 格式，类似于 launch 文件，也需要在 CMakeLists.txt 文件中进行安装
+
+```cmake
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
+
+## 可以将 config 和 launch 结合写到一起
+install(DIRECTORY config install DESTINATION share/${PROJECT_NAME})
+```
 
 
+然后在 launch 文件中调用 config 文件
 
+```yaml
+# 这个是 node 的名字，如果 node 的名字对不上也会报错
+param_node:
+  # 这里的缩进很严谨，之前这里没有缩进，就报错了
+  # 这个必须要有，ros2 以这个标签来解析参数
+  ros__parameters:
+      num_of_params: 4
+      topics_name: [scan, image]
+      topics_type: [sensor_msgs/msg/LaserScan, sensor_msgs/msg/Image]
+```
+
+```python
+import os
+from ament_index_python import get_package_share_directory
+from launch import LaunchDescription
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+  pkg_dir = get_package_share_directory('basics')
+  param_file = os.path.join(pkg_dir, 'config', 'param.yaml')
+  
+  param_node = Node(
+    package="basics",
+    # 这个是可执行文件的名字
+    executable="param_basics",
+    # 这个是 node 的名字，要和 C++ 代码中的 Node 名字对应上，如果有问题，程序无法正常执行
+    name="param_node",
+    parameters=[param_file]
+  )
+
+  ld = LaunchDescription()
+  ld.add_action(param_node)
+
+  return ld
+```
+
+调用命令：
+
+‵``bash
+ros2 launch basics param_file_launch.py 
+
+# 如果不使用 launch 文件的话，可以使用 --params-file 来传入参数文件
+ros2 run br2 basics param_basics --ros-args --params-file install/basics/share/basics/config/params.yaml
+‵``
 
 ### executors
 
