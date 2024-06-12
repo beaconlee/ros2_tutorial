@@ -38,6 +38,8 @@ private:
 
   void Go2State(RobotState new_state);
 
+  void CheckState();
+
 
   RobotState state_{BumpGoNode::RobotState::STOP};
 
