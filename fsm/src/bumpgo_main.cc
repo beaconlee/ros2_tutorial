@@ -1,10 +1,14 @@
 #include <cstdio>
+#include <bumpgo/bumpgo_node.hpp>
+#include <rclcpp/executors.hpp>
 
-int main(int argc, char ** argv)
+int main(int argc, char** argv)
 {
-  (void) argc;
-  (void) argv;
+  rclcpp::init(argc, argv);
+  auto bump_node = std::make_shared<fsm::bump_go::BumpGoNode>("bump_node");
 
-  printf("hello world fsm package\n");
+  rclcpp::spin(bump_node);
+
+  rclcpp::shutdown();
   return 0;
 }
