@@ -7,6 +7,39 @@
 ros2 pkg create package_name --build_type 构建类型 --dependencies 依赖列表 --node_name 可执行程序名称
 ```
 
+### build
+
+ros2 进行编译 
+
+```bash
+# colcon (collective construction)
+
+colcon build --symlink-install
+
+# the --symlink-install option, creates a symlink to their original locations (in src or build), instead of copying.
+# This way, we save space and can modify certain configuration files directly in src.
+```
+
+
+执行这个命令后，将会创建三个目录在这个根工作空间：
+
+- build:  It contains the intermediate files of the compilation, as well as the tests, and temporary files.
+
+- install:  It contains the compilation results, along with all the files necessary to execute them (specific configuration files, node startup scripts, maps ...).
+
+- log:  Contains a log of the compilation or testing process.
+
+
+要清理/重置工作空间，只需删除这三个目录。重新编译将会重新生成它们。
+To clean/reset a workspace, simply delete these three directories. A new compilation will regenerate them.
+
+为了使用工作空间的内容，可以像激活下层工作空间一样激活它作为叠加层：
+In order to use the content of the workspace, activate it as an overlay, in a similar way to how the underlay was activated:
+
+```bash
+# cd  workspace
+source install/setup.bash
+```
 
 ### launch
 
