@@ -1,7 +1,7 @@
 
 # basics
 
-### Create a node in ROS2
+### Create a package in ROS2
 
 ```bash
 ros2 pkg create package_name --build_type 构建类型 --dependencies 依赖列表 --node_name 可执行程序名称
@@ -22,7 +22,12 @@ colcon build --symlink-install
 
 # the --symlink-install option, creates a symlink to their original locations (in src or build), instead of copying.
 # This way, we save space and can modify certain configuration files directly in src.
+
+olcon build --symlink-install --packages-select package_name
+
+# the --packages-select option, 将会选择只编译选择了的包
 ```
+
 
 
 执行这个命令后，将会创建三个目录在这个根工作空间：
@@ -44,6 +49,61 @@ In order to use the content of the workspace, activate it as an overlay, in a si
 # cd  workspace
 source install/setup.bash
 ```
+
+
+
+### run
+
+ros2 查看一个包的所有可执行文件
+
+```bash
+ros2 pkg executables package_name
+```
+
+
+ros2 运行一个包的可执行文件，run 命令需要两个参数：the package where the executable is and the name of the name of the executable
+
+```bash
+ros2 run pckage_name execute_name
+```
+
+
+```bash
+ros2 node list
+ros2 topic list
+
+ros2 topic info /node_name  # 列出 topic 的信息
+ros2 node info /node_name  # 列出 node 的信息
+
+
+ros2 interface list  # 列出 ros2 中的 interface 信息
+# 主要包含有三个类：Message、Services、Actions
+
+
+ros2 interface show std_msgs/msg/String
+  # $ This was originally provided as an example message.
+  # $ It is deprecated as of Foxy
+  # $ It is recommended to create your own semantically meaningful message.
+  # $ However if you would like to continue using this please use the equivalent in example_msgs.
+
+  # $ string data
+# This message format has only one field called data, of string type.
+
+
+ros2 topic echo /chatter
+# 把下面的命令输入终端，检查当前在话题上发布的消息（/talker 应该仍在另一个终端上运行）。
+# Check the messages currently being published (/talker should be still running in the other terminal) in the topic just typing:
+
+
+ros2 run rqt_graph rqt_graph # 可视化计算图
+
+```
+
+
+
+
+
+
 
 ### launch
 
