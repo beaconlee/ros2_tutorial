@@ -65,7 +65,11 @@ install(TARGETS
 
 # install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
+# beacon 可以把这个 install 和上面的 install 合并到一起
 install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
+
+
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
