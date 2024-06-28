@@ -12,10 +12,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 set(dependencies 
   rclcpp
   std_msgs
+  sensor_msgs
+  geometry_msgs
+  visualization_msgs
 )
 
 include_directories(include)
@@ -24,6 +30,18 @@ include_directories(include)
 add_executable(bumpgo
   src/planning/a_star.cc
 )
+
+add_executable(vff_avoidance
+  src/vff_avoidance/avoidance_node.cc
+)
+
+
+# add_library(${PROJECT_NAME} SHARED src/vff_avoidance/avoidance_node.cc)
+# ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+
+ament_target_dependencies(vff_avoidance ${dependencies})
+# target_link_libraries(vff_avoidance ${PROJECT_NAME})
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
