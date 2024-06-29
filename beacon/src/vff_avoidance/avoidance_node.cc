@@ -46,8 +46,14 @@ void VFFAvoidanceNode::control_cycle()
     return;
   }
 
-  VFFVectors vff_vec = get_vff(*last_scan_);
-  std::vector<float> result = vff_vec.result;
+  // VFFVectors vff_vec = get_vff(*last_scan_);
+  // 这里可以使用 const 引用来提高效率
+  const VFFVectors& vff_vec = get_vff(*last_scan_);
+
+  // std::vector<float> result = vff_vec.result;
+  // 同样这里可以使用常量引用
+  // 有个问题是：如果使用普通引用，就会报错，但是使用 const& 就不会报错
+  const std::vector<float>& result = vff_vec.result;
 
   geometry_msgs::msg::Twist vel;
 
@@ -73,12 +79,12 @@ void VFFAvoidanceNode::control_cycle()
   // 关于 debug 的输出自己也不会
   if(vff_debug_pub_->get_subscription_count() > 0)
   {
-    vff_debug_pub_->publish(get_vff_debug(vff_vec));
+    vff_debug_pub_->publish(get_debug_vff(vff_vec));
   }
 }
 
 
-VFFVectors VFFAvoidanceNode::get_vff(sensor_msgs::msg::LaserScan& scan)
+VFFVectors VFFAvoidanceNode::get_vff(const sensor_msgs::msg::LaserScan& scan)
 {
   static const float OBSTACLE_DISTANCE = 1.;
 
@@ -96,7 +102,9 @@ VFFVectors VFFAvoidanceNode::get_vff(sensor_msgs::msg::LaserScan& scan)
   // }
 
   vff_vec.repulsive = {0., 0.};
-  vff_vec.result = vff_vec.attractive;
+  // vff_vec.result = vff_vec.attractive;
+  // 初始化 result 假设它周围没有障碍物
+  vff_vec.result = {1.0, 0.};
 
   int idx_min = std::min_element(scan.ranges.begin(), scan.ranges.end()) -
                 scan.ranges.begin();
@@ -105,6 +113,9 @@ VFFVectors VFFAvoidanceNode::get_vff(sensor_msgs::msg::LaserScan& scan)
   if(dist_min < OBSTACLE_DISTANCE)
   {
     float angle = scan.angle_min + scan.angle_increment * idx_min;
+
+    // 这里加上一个 PI，是说明机器人要往远离障碍物的方向移动
+    // 因此加上一个 PI，去反方向
     float angle_orthogonal = angle + M_PI;
 
     float complementary_dist = OBSTACLE_DISTANCE - dist_min;
@@ -113,16 +124,20 @@ VFFVectors VFFAvoidanceNode::get_vff(sensor_msgs::msg::LaserScan& scan)
     vff_vec.repulsive[0] = complementary_dist * cos(angle_orthogonal);
     vff_vec.repulsive[1] = complementary_dist * sin(angle_orthogonal);
 
-    vff_vec.result[0] = vff_vec.result[0] + vff_vec.repulsive[0];
-    vff_vec.result[1] = vff_vec.result[1] + vff_vec.repulsive[1];
+    // vff_vec.result[0] = vff_vec.attractive[0] + vff_vec.repulsive[0];
+    // vff_vec.result[1] = vff_vec.attractive[1] + vff_vec.repulsive[1];
   }
+
+  // tips 自己的想法是直接将 result 初始化为 attractive，如果有 repulsive，再对 result 进行操作
+  vff_vec.result[0] = vff_vec.attractive[0] + vff_vec.repulsive[0];
+  vff_vec.result[1] = vff_vec.attractive[1] + vff_vec.repulsive[1];
 
   return vff_vec;
 }
 
 
 visualization_msgs::msg::MarkerArray
-VFFAvoidanceNode::get_vff_debug(const VFFVectors& vff_vector)
+VFFAvoidanceNode::get_debug_vff(const VFFVectors& vff_vector)
 {
   visualization_msgs::msg::MarkerArray marker_arr;
   marker_arr.markers.push_back(

@@ -32,11 +32,14 @@ public:
   void scan_callback(sensor_msgs::msg::LaserScan::UniquePtr msg);
   void control_cycle();
 
-private:
-  VFFVectors get_vff(sensor_msgs::msg::LaserScan& scan);
+  // 定义为 protected 的方法，方便使用 gtest 进行继承测试
+protected:
+  // VFFVectors get_vff(sensor_msgs::msg::LaserScan& scan);
+  // tips 这里应该是 const &
+  VFFVectors get_vff(const sensor_msgs::msg::LaserScan& scan);
 
   visualization_msgs::msg::MarkerArray
-  get_vff_debug(const VFFVectors& vff_vector);
+  get_debug_vff(const VFFVectors& vff_vector);
 
   visualization_msgs::msg::Marker make_maker(const std::vector<float>& vector,
                                              VFFColor color);
