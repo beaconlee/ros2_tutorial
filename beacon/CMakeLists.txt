@@ -7,6 +7,7 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+#${PROJECT_NAME} 是包名
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -35,9 +36,21 @@ add_executable(vff_avoidance
   src/vff_avoidance/avoidance_node.cc
 )
 
+add_library(${PROJECT_NAME} SHARED src/vff_avoidance/avoidance_node.cc)
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+
+# install(TARGETS
+#   vff_avoidance
+#   DESTINATION lib/${PROJECT_NAME}
+# )
+
 install(TARGETS
   vff_avoidance
-  DESTINATION lib/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+  # DESTINATION lib/${PROJECT_NAME}
+
 )
 
 # add_library(${PROJECT_NAME} SHARED src/vff_avoidance/avoidance_node.cc)
@@ -57,6 +70,10 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  # set gtest
+  find_package(ament_cmake_gtest REQUIRED)
+  add_subdirectory(tests)
 endif()
 
 ament_package()
