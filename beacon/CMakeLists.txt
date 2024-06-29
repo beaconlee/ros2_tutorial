@@ -35,6 +35,10 @@ add_executable(vff_avoidance
   src/vff_avoidance/avoidance_node.cc
 )
 
+install(TARGETS
+  vff_avoidance
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 # add_library(${PROJECT_NAME} SHARED src/vff_avoidance/avoidance_node.cc)
 # ament_target_dependencies(${PROJECT_NAME} ${dependencies})

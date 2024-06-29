@@ -1,4 +1,5 @@
 #include "beacon/vff_avoidance/avoidance_node.hpp"
+#include <rclcpp/executors.hpp>
 
 using namespace std::chrono_literals;
 
@@ -138,22 +139,71 @@ VFFAvoidanceNode::make_maker(const std::vector<float>& vector, VFFColor color)
 {
   visualization_msgs::msg::Marker marker;
   marker.header.stamp = now();
-  marker.header.frame_id = "base_footprint"
+  marker.header.frame_id = "base_footprint";
+
+  // 没有设置 marker 的 type 和 id
+  marker.type = visualization_msgs::msg::Marker::ARROW;
+  marker.id = visualization_msgs::msg::Marker::ADD;
 
   geometry_msgs::msg::Point start;
   geometry_msgs::msg::Point end;
 
-  start.set__x(0.0);
-  start.set__y(0.0);
+  // start.set__x(0.0);
+  // start.set__y(0.0);
+  start.x = 0.;
+  start.y = 0.;
 
-  end.set__x(vector[0]);
-  end.set__y(vector[1]);
+  // end.set__x(vector[0]);
+  // end.set__y(vector[1]);
+  end.x = vector[0];
+  end.y = vector[1];
 
-  marker.
+  marker.points = {start, end};
+
+  // 这里对颜色赋值自己忘记要怎么弄了
+  switch(color)
+  {
+    // 注意这里设置 rgb 值是 0 到 1. 不是到 255
+    case VFFColor::RED:
+      marker.id = 0;
+      marker.color.r = 1.0;
+      break;
+    case VFFColor::GREEN:
+      marker.id = 1;
+      marker.color.g = 1.0;
+      break;
+    case VFFColor::BLUE:
+      marker.id = 2;
+      marker.color.b = 1.0;
+      break;
+    case VFFColor::NUM_COLOR:
+      marker.id = 3;
+      marker.color.r = 1.;
+      marker.color.g = 1.;
+      marker.color.b = 1.;
+      break;
+  }
+
+  marker.color.a = 1.0;
+
+  return marker;
 }
 
 
 } // namespace planning
 } // namespace beacon
 
-int main() {}
+int main(int argc, char** argv)
+{
+  rclcpp::init(argc, argv);
+  auto nodes = beacon::planning::VFFAvoidanceNode::make_shared("avoidance");
+
+
+  auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor->add_node(nodes);
+
+  executor->spin();
+
+  rclcpp::shutdown();
+  return 0;
+}
