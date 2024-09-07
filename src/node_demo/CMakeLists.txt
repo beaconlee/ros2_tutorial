@@ -21,6 +21,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_executable(beacon src/beacon.cpp)
 target_include_directories(beacon PUBLIC
@@ -30,6 +31,7 @@ target_compile_features(beacon PUBLIC c_std_99 cxx_std_17)  # Require C99 and C+
 ament_target_dependencies(
   beacon
   "rclcpp"
+  "std_msgs"
 )
 
 install(TARGETS beacon
