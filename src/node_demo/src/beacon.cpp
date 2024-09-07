@@ -14,7 +14,8 @@ public:
   }
 
 private:
-  void publiser()
+  void
+  publiser()
   {
     std_msgs::msg::String str;
     str.data = "publisher";
@@ -44,7 +45,8 @@ public:
   }
 
 private:
-  void Sub(std_msgs::msg::String::SharedPtr stptr)
+  void
+  Sub(std_msgs::msg::String::SharedPtr stptr)
   {
     // str.data 是一个 string 类型
     // 将 string 类型转化为 char* 类型
@@ -58,7 +60,8 @@ private:
 };
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
   // auto pub = rclcpp::Node::make_shared("pub");
