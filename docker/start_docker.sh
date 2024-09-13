@@ -33,7 +33,7 @@ fi
 # 创建并启动新的容器
 echo "Creating and starting new container with image: ${FULL_IMAGE_NAME}"
 docker run -it -d --privileged \
-    -v /home/ros/humble:/workspace \
+    -v /home/ros/ros2_tutorial:/workspace \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=:1 \
     --name ${CONTAINER_NAME} \
