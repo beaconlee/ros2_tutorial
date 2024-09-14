@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot name="beaconcar">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.2 0.3 0.1" />
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0.05" />
+      <material name="white">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="wheel_left_front">
+    <visual>
+      <geometry>
+        <cylinder length="0.05" radius="0.05" />
+      </geometry>
+      <origin rpy="0 1.57 0" xyz="0.1 0.1 0" />
+      <material name="white">
+        <color rgba="0 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="wheel_left_back">
+    <visual>
+      <geometry>
+        <cylinder length="0.05" radius="0.05" />
+      </geometry>
+      <origin rpy="0 1.57 0" xyz="-0.1 0.1 0" />
+      <material name="white">
+        <color rgba="0 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="wheel_right_front">
+    <visual>
+      <geometry>
+        <cylinder length="0.05" radius="0.05" />
+      </geometry>
+      <origin rpy="0 1.57 0" xyz="0.1 -0.1 0" />
+      <material name="white">
+        <color rgba="0 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="wheel_right_back">
+    <visual>
+      <geometry>
+        <cylinder length="0.05" radius="0.05" />
+      </geometry>
+      <origin rpy="0 1.57 0" xyz="-0.1 -0.1 0" />
+      <material name="white">
+        <color rgba="0 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="base_2_wheel_left_front" type="fixed">
+    <parent link="base_link" />
+    <child link="wheel_left_front" />
+    <origin xyz="0 0 0" />
+  </joint>
+  <joint name="base_2_wheel_left_back" type="fixed">
+    <parent link="base_link" />
+    <child link="wheel_left_back" />
+    <origin xyz="0 0 0" />
+  </joint>
+  <joint name="base_2_wheel_right_front" type="fixed">
+    <parent link="base_link" />
+    <child link="wheel_right_front" />
+    <origin xyz="0 0 0" />
+  </joint>
+  <joint name="base_2_wheel_right_back" type="fixed">
+    <parent link="base_link" />
+    <child link="wheel_right_back" />
+    <origin xyz="0 0 0" />
+  </joint>
+</robot>
