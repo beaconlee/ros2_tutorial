@@ -1,16 +1,99 @@
 <?xml version="1.0"?>
 <robot name="beaconcar">
-  <link name="base_link">
+	<link name="base_link">
+    <!-- 可视化模型 -->
     <visual>
+      <!-- 定义该 link 的几何形状（即可视化中的外形） -->
       <geometry>
-        <box size="0.2 0.3 0.1" />
+          <!-- box：定义一个立方体或长方体，size 表示立方体的长宽高。
+               cylinder：定义一个圆柱体，length 和 radius 分别表示圆柱体的高度和半径。
+               sphere：定义一个球体，radius 表示球体的半径。
+               mesh：允许使用外部三维模型文件（如 .dae 或 .stl 文件）来定义几何形状，filename 属性指向该模型文件，scale 用来设置缩放比。
+          -->
+          <box size="0.2 .3 .1"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0 0 0.05" />
+      <!-- 定义视觉模型在该 link 坐标系中的相对位置和姿态。 -->
+      <!-- xyz：表示视觉模型相对于 link 坐标系的平移（即位置）。
+           xyz="0 0 0.05" 表示该视觉模型相对于 link 原点沿 Z 轴方向偏移 0.05 米。
+           rpy：表示视觉模型的旋转角度，rpy="0 0 0" 表示绕 X、Y 和 Z 轴的旋转角度（单位为弧度）。
+           这里 rpy="0 0 0" 表示没有旋转。
+       -->
+      <origin rpy="0 0 0" xyz="0 0 0.05"/>
+      <!-- 定义该 link 在视觉上所用的材质或颜色 -->
       <material name="white">
-        <color rgba="1 1 1 1" />
+        <!-- name：指定材质的名称（可以从外部的材质库引用，或直接定义）。
+             color：定义颜色的 rgba 值（红、绿、蓝、透明度），每个值在 0 到 1 之间。例如，rgba="1 1 1 1" 表示纯白色，不透明。
+             texture（可选）：可以引用一个外部的图片文件，作为该模型的纹理图。 
+        -->
+        <color rgba="1 1 1 1"/>
       </material>
+      <!-- 用于指定一个外部的三维模型文件 -->
+      <!-- filename：指定外部模型文件的路径。
+           scale：调整模型的尺寸。 -->
+      <!-- <mesh filename="model.dae" scale="1.0 1.0 1.0"/> -->
     </visual>
-  </link>
+    <!-- 物理碰撞检测 -->
+		<collision>
+      <!-- 定义用于碰撞检测的几何形状 -->
+      <!-- 在物理仿真中，当机器人与环境或其他物体发生接触时，collision 的几何形状用于计算物理交互（如碰撞、接触力等）。
+           通常，这里的几何形状会相对简单，以提高仿真的效率。 
+      -->
+			<geometry>
+              <!-- box：定义一个立方体或长方体，用 size 属性来描述其尺寸。
+                   cylinder：定义一个圆柱体，属性 radius 和 length 分别定义半径和高度。
+                   sphere：定义一个球体，使用 radius 来定义其半径。
+                   mesh：允许使用外部三维模型文件，和 visual 中的 mesh 类似，定义复杂形状，
+                   但通常建议尽量使用简单的形状来减少碰撞计算的复杂度。 
+              -->
+       				<box size="0.2 .3 0.1"/>
+			</geometry>
+
+      <!-- 定义碰撞几何相对于 link 坐标系的位置和姿态 -->
+      <!-- <origin xyz="0 0 0.05" rpy="0 0 0"/> -->
+
+      <!-- surface 标签用于控制碰撞时的物理特性，比如摩擦、弹跳、接触力等，可以对仿真中的运动与交互有更细致的调控。 -->
+
+      <!-- <surface>
+        friction：定义摩擦属性，影响碰撞时的摩擦力。
+        mu 和 mu2：分别表示主摩擦系数和次摩擦系数，决定碰撞后的滑动行为。
+        bounce：定义碰撞后的弹跳行为，参数为 restitution_coefficient，决定碰撞后恢复的弹力。
+        contact：用于定义接触力和接触点的相关属性，如最大接触力、接触点数量等。
+        <friction>
+          <ode>
+            <mu>0.5</mu>    主摩擦系数
+            <mu2>0.3</mu2>  次摩擦系数 
+          </ode>
+        </friction>
+        <bounce>
+          <restitution_coefficient>0.1</restitution_coefficient> < 弹性系数>
+        </bounce>
+      </surface> -->
+		</collision>
+    <!-- 物理运动模拟：质量和惯性 -->
+    <!-- 定义了机器人的质量分布和惯性矩 -->
+    <!-- 物理仿真中，inertial 标签用于确定机器人或物体的运动特性，例如加速度、旋转等。 -->
+		<inertial>
+      <!-- 定义该 link 的质量，即整个组件的重量，单位为千克（kg）。。质量值影响机器人在物理仿真中的惯性、加速度等物理表现。 -->
+			<mass value="100"/>
+      <!-- 定义该 link 的惯性张量（惯性矩），用于描述物体绕各轴的旋转惯性。
+           惯性矩决定物体在旋转时的阻力大小（即物体在旋转时的难易程度）。惯性张量是一个对称矩阵，用来描述物体的惯性分布。
+      -->
+      <!-- ixx、iyy、izz：分别表示物体绕 X、Y 和 Z 轴旋转的惯性矩（也称为主惯性矩）
+           ixy、ixz、iyz：表示物体在不同轴上的耦合惯性矩。对于一个对称物体，耦合项通常为 0
+           ixx：绕 X 轴旋转的惯性矩。
+           iyy：绕 Y 轴旋转的惯性矩。
+           izz：绕 Z 轴旋转的惯性矩。
+           ixy、ixz、iyz：分别表示 X-Y、X-Z 和 Y-Z 轴之间的惯性耦合。
+           惯性矩决定了物体绕特定轴旋转的难易程度。
+           值越大，物体在该轴上的旋转阻力越大。
+           对于对称物体或几何中心在坐标原点的物体，耦合项（如 ixy, ixz, iyz）通常为 0。
+       -->
+	 		<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+ 	</link>
+
+
+
   <link name="wheel_left_front">
     <visual>
       <geometry>
@@ -22,6 +105,12 @@
       </material>
     </visual>
   </link>
+  <joint name="base_2_wheel_left_front" type="fixed">
+    <parent link="base_link" />
+    <child link="wheel_left_front" />
+    <origin xyz="0 0 0" />
+  </joint>
+
   <link name="wheel_left_back">
     <visual>
       <geometry>
@@ -33,6 +122,12 @@
       </material>
     </visual>
   </link>
+  <joint name="base_2_wheel_left_back" type="fixed">
+    <parent link="base_link" />
+    <child link="wheel_left_back" />
+    <origin xyz="0 0 0" />
+  </joint>
+
   <link name="wheel_right_front">
     <visual>
       <geometry>
@@ -44,6 +139,13 @@
       </material>
     </visual>
   </link>
+  <joint name="base_2_wheel_right_front" type="fixed">
+    <parent link="base_link" />
+    <child link="wheel_right_front" />
+    <origin xyz="0 0 0" />
+  </joint>
+
+
   <link name="wheel_right_back">
     <visual>
       <geometry>
@@ -55,24 +157,14 @@
       </material>
     </visual>
   </link>
-  <joint name="base_2_wheel_left_front" type="fixed">
-    <parent link="base_link" />
-    <child link="wheel_left_front" />
-    <origin xyz="0 0 0" />
-  </joint>
-  <joint name="base_2_wheel_left_back" type="fixed">
-    <parent link="base_link" />
-    <child link="wheel_left_back" />
-    <origin xyz="0 0 0" />
-  </joint>
-  <joint name="base_2_wheel_right_front" type="fixed">
-    <parent link="base_link" />
-    <child link="wheel_right_front" />
-    <origin xyz="0 0 0" />
-  </joint>
   <joint name="base_2_wheel_right_back" type="fixed">
     <parent link="base_link" />
     <child link="wheel_right_back" />
     <origin xyz="0 0 0" />
   </joint>
+
+  <link name="arm_base">
+
+  </link>
+
 </robot>
