@@ -10,7 +10,8 @@
                sphere：定义一个球体，radius 表示球体的半径。
                mesh：允许使用外部三维模型文件（如 .dae 或 .stl 文件）来定义几何形状，filename 属性指向该模型文件，scale 用来设置缩放比。
           -->
-          <box size="0.2 .3 .1"/>
+          <!-- size="x y z" 方向上的长度-->
+          <box size="0.3 .2 .1"/>
       </geometry>
       <!-- 定义视觉模型在该 link 坐标系中的相对位置和姿态。 -->
       <!-- xyz：表示视觉模型相对于 link 坐标系的平移（即位置）。
@@ -18,6 +19,14 @@
            rpy：表示视觉模型的旋转角度，rpy="0 0 0" 表示绕 X、Y 和 Z 轴的旋转角度（单位为弧度）。
            这里 rpy="0 0 0" 表示没有旋转。
        -->
+       <!-- xyz 代表在 xyz 轴上的平移 -->
+       <!-- rpy 代表物体的旋转 -->
+       <!-- 代表滚转（Roll）、俯仰（Pitch）和偏航（Yaw），分别对应绕 X，Y 和 Z 轴的旋转角度。单位通常为弧度（radians）。 -->
+       <!-- 
+        Roll (r)：绕 X 轴旋转。
+        Pitch (p)：绕 Y 轴旋转。
+        Yaw (y)：绕 Z 轴旋转。
+        -->
       <origin rpy="0 0 0" xyz="0 0 0.05"/>
       <!-- 定义该 link 在视觉上所用的材质或颜色 -->
       <material name="white">
@@ -99,7 +108,7 @@
       <geometry>
         <cylinder length="0.05" radius="0.05" />
       </geometry>
-      <origin rpy="0 1.57 0" xyz="0.1 0.1 0" />
+      <origin rpy="1.57 0 0" xyz="0.1 0.1 0" />
       <material name="white">
         <color rgba="0 0 0 1" />
       </material>
@@ -116,7 +125,7 @@
       <geometry>
         <cylinder length="0.05" radius="0.05" />
       </geometry>
-      <origin rpy="0 1.57 0" xyz="-0.1 0.1 0" />
+      <origin rpy="1.57 0 0" xyz="-0.1 0.1 0" />
       <material name="white">
         <color rgba="0 0 0 1" />
       </material>
@@ -133,7 +142,7 @@
       <geometry>
         <cylinder length="0.05" radius="0.05" />
       </geometry>
-      <origin rpy="0 1.57 0" xyz="0.1 -0.1 0" />
+      <origin rpy="1.57 0 0" xyz="0.1 -0.1 0" />
       <material name="white">
         <color rgba="0 0 0 1" />
       </material>
@@ -151,7 +160,7 @@
       <geometry>
         <cylinder length="0.05" radius="0.05" />
       </geometry>
-      <origin rpy="0 1.57 0" xyz="-0.1 -0.1 0" />
+      <origin rpy="1.57 0 0" xyz="-0.1 -0.1 0" />
       <material name="white">
         <color rgba="0 0 0 1" />
       </material>
@@ -164,7 +173,215 @@
   </joint>
 
   <link name="arm_base">
-
+    <visual>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0.1">
+      </origin>
+      <material name="white">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.1 .1 .1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
   </link>
 
+  <!-- 
+      设置当前 joint 的类型为转动关节
+      即允许两个 link 之间进行绕某个轴的旋转运动
+  -->
+
+  <joint name="base_2_arm_base" type="continuous">
+    <parent link="base_link"/>
+    <child link="arm_base" />
+    <!-- xyz 属性指定了关节的旋转轴在局部坐标系中的方向向量 -->
+    <!-- 
+      xyz="1 0 0"：沿 X 轴旋转（通常是前后方向）。
+      xyz="0 1 0"：沿 Y 轴旋转（通常是左右方向）。
+      xyz="0 0 1"：沿 Z 轴旋转（通常是上下方向）。
+
+      在物理实现中，通常旋转轴是定义在一个明确的方向上，比如沿着 X、Y 或 Z 轴，或者它们的简单组合（如沿着 X 或 Y 平面的旋转轴）。
+      使用 xyz="1 1 1" 这样的非正交向量，虽然可以表示沿对角线方向的旋转，但在多数场景下，这可能不是常规的设计，特别是对于机械关节，这样的旋转轴并不符合通常的物理结构设计。
+    -->
+    <axis xyz="0 0 1"/>
+    <!--
+      <origin> 标签的主要作用是指定关节的原点（即关节相对父 link 的坐标系）在三维空间中的位置（平移）和姿态（旋转）。它设置了关节的相对位置和旋度，决定了关节的运动是在什么地方发生的，它有两个属性：
+
+      xyz：定义关节原点相对父 link 坐标系（是相对坐标系）的平移（单位：米）。
+           比如关节是放在 link 的中心、末端或某个偏移位置上。
+      rpy：定义关节原点相对父 link 坐标系的旋转，通过 roll（绕 X 轴旋转）、pitch（绕 Y 轴旋转）、yaw（绕 Z 轴旋转）来表示旋转角度（单位：弧度）。
+          rpy="0 0 0" 表示没有旋转，关节的方向与父 link 坐标系保持一致。
+    -->
+    <!-- 
+      设置 origin 是因为：
+      关节位置的定义：关节通常不会直接位于父 link 的坐标系原点，设置 <origin> 可以指定关节的具体位置，例如在机器人手臂上，关节可能位于不同的部分，或者机器人脚部的关节可能在末端偏移一点。
+      关节的旋转方向：在很多情况下，关节的旋转轴并不一定与默认坐标轴方向一致，设置 <origin> 的旋转部分（rpy）可以调整关节的旋转方向，确保运动方向和机械设计一致。
+     -->
+    <origin xyz="0 0 0"/>
+  </joint>
+
+
+  <link name="arm_button">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.5" />
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0.25"/>
+      <material name="white">
+        <color rgb="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.05 0.5"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="0.0"/>
+    </inertial>
+  </link>
+  
+  <joint name="arm_button_2_arm_base" type="revolute">
+    <parent link="base_link"/>
+    <child link="arm_button"/>
+    <axis xyz="1 0 0"/>
+    <origin xyz="0 0 0.15"/>
+    <limit effort="1000.0" lower="-1.0" upper="1.0" velocity="0.5"/>
+  </joint>
+
+
+  <link name="arm_upper">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.5"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.06 0 0.15"/>
+      <material name="white">
+      <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.05 0.5"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="arm_upper_to_arm_button" type="revolute">
+    <parent link="arm_button"/>
+    <child link="arm_upper"/>
+    <axis xyz="1 0 0"/>
+    <origin xyz="0.0 0 0.45"/>
+    <limit effort ="1000.0" lower="-2.5" upper="2.5" velocity="0.5"/>
+  </joint>
+
+  <link name="left_gripper">
+    <visual>
+      <!-- <origin rpy="-3.1415 0. 0." /> -->
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.1 .1 .1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1." ixy="0.0" ixz="0.0" iyy="1." iyz="0." izz="1."/>
+    </inertial>
+  </link>
+
+  <link name="right_gripper">
+    <visual>
+      <origin rpy="-3.1415 0 0" xyz="0.0 0.00495 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.1 .1 .1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1." ixy="0.0" ixz="0.0" iyy="1." iyz="0." izz="1."/>
+    </inertial>
+  </link>
+
+  <!-- <joint name="right_gripper_2_arm_upper" type="revolute"> -->
+  <joint name="right_gripper_2_arm_upper" type="revolute">
+    <parent link="arm_upper"/>
+    <child link="right_gripper"/>
+    <axis xyz="0 0 -1" />
+    <limit effort="1000." lower="0." upper="0.548" velocity="0.5"/>
+    <origin rpy="0 -1.57 0" xyz="0.06 0 0.4"/>
+  </joint>
+
+  <joint name="left_gripper_2_arm_upper" type="revolute">
+    <parent link="arm_upper"/>
+    <child link="left_gripper"/>
+    <axis xyz="0 0 1" />
+    <limit effort="1000." lower="0." upper="0.548" velocity="0.5"/>
+    <origin rpy="0 -1.57 0" xyz="0.06 0 0.4"/>
+  </joint>
+  
+
+  <link name="left_tip">
+    <visual>
+      <origin rpy="0.0 0 0" xyz="0.09137 0.00495 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <box size=".1 .1 .1"/>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+    </inertial>
+  </link>
+
+  <link name="right_tip">
+    <visual>
+      <origin rpy="-3.1415 0 0" xyz="0.09137 0.00495 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <box size=".1 .1 .1"/>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+    </inertial>
+  </link>
+
+  <joint name="right_tip_joint" type="fixed">
+    <parent link="right_gripper"/>
+    <child link="right_tip"/>
+  </joint>
+
+
+  <joint name="left_tip_joint" type="fixed">
+    <parent link="left_gripper"/>
+    <child link="left_tip"/>
+  </joint>
 </robot>
