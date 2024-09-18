@@ -81,9 +81,9 @@
     <!-- 物理运动模拟：质量和惯性 -->
     <!-- 定义了机器人的质量分布和惯性矩 -->
     <!-- 物理仿真中，inertial 标签用于确定机器人或物体的运动特性，例如加速度、旋转等。 -->
-		<inertial>
+		<!-- <inertial> -->
       <!-- 定义该 link 的质量，即整个组件的重量，单位为千克（kg）。。质量值影响机器人在物理仿真中的惯性、加速度等物理表现。 -->
-			<mass value="100"/>
+			<!-- <mass value="100"/> -->
       <!-- 定义该 link 的惯性张量（惯性矩），用于描述物体绕各轴的旋转惯性。
            惯性矩决定物体在旋转时的阻力大小（即物体在旋转时的难易程度）。惯性张量是一个对称矩阵，用来描述物体的惯性分布。
       -->
@@ -97,9 +97,21 @@
            值越大，物体在该轴上的旋转阻力越大。
            对于对称物体或几何中心在坐标原点的物体，耦合项（如 ixy, ixz, iyz）通常为 0。
        -->
-	 		<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-		</inertial>
+	 		<!-- <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/> -->
+		<!-- </inertial> -->
  	</link>
+
+  <link name="dummy_link">
+    <inertial>
+      <mass value="100.0" />
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="dummy_link"/>
+    <child link="base_link"/>
+  </joint>
 
 
 
@@ -251,7 +263,7 @@
   </link>
   
   <joint name="arm_button_2_arm_base" type="revolute">
-    <parent link="base_link"/>
+    <parent link="arm_base"/>
     <child link="arm_button"/>
     <axis xyz="1 0 0"/>
     <origin xyz="0 0 0.15"/>
@@ -350,7 +362,9 @@
       </geometry>
     </visual>
     <collision>
-      <box size=".1 .1 .1"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
     </collision>
     <inertial>
       <mass value="1"/>
@@ -366,7 +380,9 @@
       </geometry>
     </visual>
     <collision>
-      <box size=".1 .1 .1"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
     </collision>
     <inertial>
       <mass value="1"/>
