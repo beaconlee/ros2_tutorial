@@ -22,8 +22,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 add_executable(beacon src/beacon.cpp)
+add_executable(twis src/twis.cc)
+add_executable(sub_twis src/sub_twis.cc)
+add_executable(nav_odom src/nav_odom.cc)
 target_include_directories(beacon PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -32,10 +39,49 @@ ament_target_dependencies(
   beacon
   "rclcpp"
   "std_msgs"
+  "sensor_msgs"
+  "geometry_msgs"
+)
+ament_target_dependencies(
+  sub_twis
+  "rclcpp"
+  "std_msgs"
+  "sensor_msgs"
+  "geometry_msgs"
+)
+ament_target_dependencies(
+  twis
+  "rclcpp"
+  "std_msgs"
+  "sensor_msgs"
+  "geometry_msgs"
+)
+ament_target_dependencies(
+  nav_odom
+  "rclcpp"
+  "std_msgs"
+  "sensor_msgs"
+  "geometry_msgs"
+  "nav_msgs"
+  "tf2_ros"
 )
 
-install(TARGETS beacon
+# install(TARGETS beacon launch urdf
+#   DESTINATION lib/${PROJECT_NAME})
+# install(
+#   DIRECTORY  launch   urdf
+#   DESTINATION share/${PROJECT_NAME}
+# )
+
+install(TARGETS 
+  beacon
+  twis
+  sub_twis
+  nav_odom
   DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch urdf rviz DESTINATION share/${PROJECT_NAME})
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

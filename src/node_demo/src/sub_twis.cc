@@ -40,6 +40,10 @@ private:
     double scaled_linear_x = msg->linear.x * linear_scaling;
     double scaled_angular_z = msg->angular.z * angular_scaling;
 
+    static double value = 1.0;
+    value += 10;
+
+
     // Create and publish JointState message
     auto joint_state_msg = sensor_msgs::msg::JointState();
     joint_state_msg.header.stamp = this->get_clock()->now();
@@ -53,18 +57,17 @@ private:
                             "arm_upper_to_arm_button",
                             "right_gripper_2_arm_upper",
                             "left_gripper_2_arm_upper"};
-    joint_state_msg.position = {scaled_linear_x,
-                                scaled_angular_z,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0}; // Example positions
-    joint_state_msg.velocity = {scaled_linear_x,
-                                scaled_angular_z}; // Example velocities
-    joint_state_msg.effort = {0.0, 0.0};           // Example efforts
+    joint_state_msg.position = {value,
+                                value,
+                                value,
+                                value,
+                                value,
+                                value,
+                                value,
+                                value,
+                                value};            // Example positions
+    joint_state_msg.velocity = {2, 2, 2, 2};       // Example velocities
+    joint_state_msg.effort = {0.5, 0.5, 0.5, 0.5}; // Example efforts
 
     publisher_->publish(joint_state_msg);
   }
