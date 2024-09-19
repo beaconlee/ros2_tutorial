@@ -126,10 +126,12 @@
       </material>
     </visual>
   </link>
-  <joint name="base_2_wheel_left_front" type="fixed">
+  <joint name="base_2_wheel_left_front" type="revolute">
     <parent link="base_link" />
     <child link="wheel_left_front" />
     <origin xyz="0 0 0" />
+    <axis xyz="1 0 0"/>
+    <limit effort="1000.0" lower="-1.0" upper="1.0" velocity="0.5"/>
   </joint>
 
   <link name="wheel_left_back">
@@ -143,10 +145,12 @@
       </material>
     </visual>
   </link>
-  <joint name="base_2_wheel_left_back" type="fixed">
+  <joint name="base_2_wheel_left_back" type="revolute">
     <parent link="base_link" />
     <child link="wheel_left_back" />
     <origin xyz="0 0 0" />
+    <axis xyz="1 0 0"/>
+    <limit effort="1000.0" lower="-1.0" upper="1.0" velocity="0.5"/>
   </joint>
 
   <link name="wheel_right_front">
@@ -160,10 +164,12 @@
       </material>
     </visual>
   </link>
-  <joint name="base_2_wheel_right_front" type="fixed">
+  <joint name="base_2_wheel_right_front" type="revolute">
     <parent link="base_link" />
     <child link="wheel_right_front" />
     <origin xyz="0 0 0" />
+    <axis xyz="1 0 0"/>
+    <limit effort="1000.0" lower="-1.0" upper="1.0" velocity="0.5"/>
   </joint>
 
 
@@ -178,10 +184,12 @@
       </material>
     </visual>
   </link>
-  <joint name="base_2_wheel_right_back" type="fixed">
+  <joint name="base_2_wheel_right_back" type="revolute">
     <parent link="base_link" />
     <child link="wheel_right_back" />
     <origin xyz="0 0 0" />
+    <axis xyz="1 0 0"/>
+    <limit effort="1000.0" lower="-1.0" upper="1.0" velocity="0.5"/>
   </joint>
 
   <link name="arm_base">
