@@ -47,7 +47,7 @@ class PolygonAnimator:
         # self.polygon_patch = Polygon(self.polygons[0], closed=True, edgecolor='b', 
         #                             linewidth=4, facecolor='g')
         self.polygon_patch = None
-        self.ax.add_patch(self.polygon_patch)
+        # self.ax.add_patch(self.polygon_patch)
         self.ax.set_title("polygon show", fontsize=30)
     
     def read_polygons_from_file(self, filename):
@@ -55,11 +55,12 @@ class PolygonAnimator:
             current_polygon = []
             for line in file:
                 line = line.strip()
-                if re.match("^-+$"):
+                if re.match("^-+$", line):
                     self.polygons.append(current_polygon) 
                     current_polygon = []
                 else:
-                    current_polygon.append(map(float, line.split(",")))
+                    x, y = map(float, line.split(","))
+                    current_polygon.append((x, y))
 
             if current_polygon:
                 self.polygons.append(current_polygon)
@@ -70,43 +71,67 @@ class PolygonAnimator:
         self.polygon_patch.set_xy(self.polygons[frame])
         return self.polygon_patch
 
-    def animate(self):
+    def initialize_patch(self):
+        # 检查多边形列表是否为空
         if not self.polygons:
-            if not read_data_with_file(filename):
-               print("error, polygons is empty")
-               exit()
-        FuncAnimation(self.fig, self.update, frames=len(self.polygons),
+            raise ValueError("No polygons to initialize.")
+
+        self.polygon_patch = Polygon(self.polygons[0], closed=True, edgecolor='b',
+                                     linewidth=2, facecolor='g')
+        self.ax.add_patch(self.polygon_patch)
+
+        x_min = float('inf')
+        x_max = float('-inf')
+        y_min = float('inf')
+        y_max = float('-inf')
+
+        ## 不要这样写循环      
+        # for i in range(len(self.polygons)):
+        #     polygon = self.polygons[i]
+        #     x_values = [point[0] for point in polygon]
+        #     y_values = [point[1] for point in polygon]
+        for polygon in self.polygons:
+            x_values = [point[0] for point in polygon]
+            y_values = [point[1] for point in polygon]
+            
+            x_min = min(x_min, min(x_values))
+            x_max = max(x_max, max(x_values))
+            y_min = min(y_min, min(y_values))
+            y_max = max(y_max, max(y_values))
+
+        # 动态设置 x 和 y 的显示范围
+        self.ax.set_xlim(x_min - 1, x_max + 1)
+        self.ax.set_ylim(y_min - 1, y_max + 1)
+
+        self.ax.set_aspect('equal') 
+
+    def animate(self, filename):
+        if not self.polygons:
+            try:
+                self.read_polygons_from_file(filename)
+            except Exception as e:
+                print(f"Error: {e}")
+                return
+        self.initialize_patch()
+        """
+          记录一个报错:
+          /workspace/matplotlib/lib/python3.10/site-packages/matplotlib/animation.py:872: UserWarning: Animation was deleted without rendering anything. This is most likely not intended. To prevent deletion, assign the Animation to a variable, e.g. anim, that exists until you output the Animation using plt.show() or anim.save().
+          warnings.warn(
+
+          用户警告: 动画在未渲染任何内容的情况下被删除。这很可能不是预期的行为。为了防止删除，请将动画分配给一个变量，例如 `anim`，并确保在使用 `plt.show()` 或 `anim.save()` 输出动画之前，该变量存在。
+        """
+        anim = FuncAnimation(self.fig, self.update, frames=len(self.polygons),
                       interval=200, repeat=True)
         plt.show()
 
 
 if(len(sys.argv) == 2):
-  filename = sys.argv[1]
+    filename = sys.argv[1]
 elif (len(sys.argv) > 2):
-  print("")
+    print("Usage: python script.py <filename>")
+    sys.exit(1)
 
 print(f"beginning with {filename}")
 
-def read_data_with_file(filename:str):
-  polygons = []
-  with open("polygons.txt", "r") as file:
-    current_poly = []
-    for line in file:
-      line = line.strip()
-      if re.match(r"^-+$", line):
-        if current_poly:
-          polygons.append(current_poly)
-          current_poly = []
-      
-        else:
-          x, y = map(float, line.split(','))
-          current_poly.append((x, y))
-    
-    if current_poly:
-      polygons.append(current_poly)
-  return polygons
-
-
-def update(frame, polygon):
-  polygon = polygons[frame]
-  return []
+pa = PolygonAnimator()
+pa.animate(filename)
