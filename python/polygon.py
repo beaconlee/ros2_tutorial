@@ -35,15 +35,51 @@ from matplotlib.patches import Polygon
 from matplotlib.animation import FuncAnimation
 import re
 import sys
+import argparse
+import logging
 
 
 filename = "polygons.txt"
 
+class PolygonDataLoader:
+    @staticmethod
+    def load_from_file(filename):
+        polygons = []
+        try:
+            with open(filename, "r") as file:
+                current_polygon = []
+                for line in file:
+                    line = line.strip()
+                    if re.match("^-+$", line):
+                        if current_polygon:
+                            polygons.append(current_polygon)
+                        current_polygon = []
+                    else:
+                        parts = line.split(",")
+                        if len(parts) != 2:
+                            logging.warning(f"Invalid line format: {line}")
+                            continue
+                        try:
+                            x, y = map(float, parts)
+                            current_polygon.append((x, y))
+                        except ValueError:
+                            logging.warning(f"Invalid coordinate values: {line}")
+                            continue
+                if current_polygon:
+                    polygons.append(current_polygon)
+            return polygons
+        except Exception as e:
+            logging.error(f"Failed to load polygons from file '{filename}': {e}")
+            raise
+
+
+
 class PolygonAnimator:
-    def __init__(self) -> None:
+    def __init__(self, polygons) -> None:
+  
         self.fig, self.ax = plt.subplots()
-        
-        self.polygons = []
+
+        self.polygons = polygons
         # self.polygon_patch = Polygon(self.polygons[0], closed=True, edgecolor='b', 
         #                             linewidth=4, facecolor='g')
         self.polygon_patch = None
@@ -51,23 +87,35 @@ class PolygonAnimator:
         self.ax.set_title("polygon show", fontsize=30)
     
     def read_polygons_from_file(self, filename):
-        with open(filename, "r") as file:
-            current_polygon = []
-            for line in file:
-                line = line.strip()
-                if re.match("^-+$", line):
-                    self.polygons.append(current_polygon) 
-                    current_polygon = []
-                else:
-                    x, y = map(float, line.split(","))
-                    current_polygon.append((x, y))
+        try:
+          with open(filename, "r") as file:
+              current_polygon = []
+              for line in file:
+                  line = line.strip()
+                  if re.match("^-+$", line):
+                      self.polygons.append(current_polygon) 
+                      current_polygon = []
+                  else:
+                      try:
+                          x, y = map(float, line.split(","))
+                          current_polygon.append((x, y))
+                      except ValueError:
+                          raise RuntimeError(f"Invalid polygon data at line: {line}")
 
-            if current_polygon:
-                self.polygons.append(current_polygon)
+              if current_polygon:
+                  self.polygons.append(current_polygon)
 
-        return self.polygons
+          return self.polygons
+        except FileNotFoundError:
+            raise RuntimeError(f"File '{filename}' not found.")
+        except ValueError as e:
+            raise RuntimeError(f"Data format error in file '{filename}': {str(e)}")
+        except Exception as e:
+            raise RuntimeError(f"An unexpected error occurred: {str(e)}")
 
     def update(self, frame):
+        if not self.polygons or frame >= len(self.polygons):
+          return None
         self.polygon_patch.set_xy(self.polygons[frame])
         return self.polygon_patch
 
@@ -91,28 +139,37 @@ class PolygonAnimator:
         #     x_values = [point[0] for point in polygon]
         #     y_values = [point[1] for point in polygon]
         for polygon in self.polygons:
-            x_values = [point[0] for point in polygon]
-            y_values = [point[1] for point in polygon]
             
-            x_min = min(x_min, min(x_values))
-            x_max = max(x_max, max(x_values))
-            y_min = min(y_min, min(y_values))
-            y_max = max(y_max, max(y_values))
-
+            ## 不要这样遍历
+            # x_values = [point[0] for point in polygon]
+            # y_values = [point[1] for point in polygon]
+            
+            # x_min = min(x_min, min(x_values))
+            # x_max = max(x_max, max(x_values))
+            # y_min = min(y_min, min(y_values))
+            # y_max = max(y_max, max(y_values))
+            for x, y in polygon:
+                x_min = min(x_min, x)
+                x_max = max(x_max, x)
+                y_min = min(y_min, y)
+                y_max = max(y_max, y)
         # 动态设置 x 和 y 的显示范围
         self.ax.set_xlim(x_min - 1, x_max + 1)
         self.ax.set_ylim(y_min - 1, y_max + 1)
 
         self.ax.set_aspect('equal') 
 
-    def animate(self, filename):
+    def animate(self):
+        logging.info("Starting animation")
         if not self.polygons:
             try:
-                self.read_polygons_from_file(filename)
+                self.polygons = PolygonDataLoader.load_from_file(self.filename)
             except Exception as e:
                 print(f"Error: {e}")
                 return
-        self.initialize_patch()
+        
+        ## 直接使用 init_func 参数
+        # self.initialize_patch()
         """
           记录一个报错:
           /workspace/matplotlib/lib/python3.10/site-packages/matplotlib/animation.py:872: UserWarning: Animation was deleted without rendering anything. This is most likely not intended. To prevent deletion, assign the Animation to a variable, e.g. anim, that exists until you output the Animation using plt.show() or anim.save().
@@ -121,17 +178,36 @@ class PolygonAnimator:
           用户警告: 动画在未渲染任何内容的情况下被删除。这很可能不是预期的行为。为了防止删除，请将动画分配给一个变量，例如 `anim`，并确保在使用 `plt.show()` 或 `anim.save()` 输出动画之前，该变量存在。
         """
         anim = FuncAnimation(self.fig, self.update, frames=len(self.polygons),
-                      interval=200, repeat=True)
-        plt.show()
+                            init_func=self.initialize_patch, interval=200, repeat=True)
+        try:
+            plt.show()
+        except Exception as e:
+            logging.error(f"Animation interrupted: {e}")
 
 
-if(len(sys.argv) == 2):
-    filename = sys.argv[1]
-elif (len(sys.argv) > 2):
-    print("Usage: python script.py <filename>")
-    sys.exit(1)
+# if(len(sys.argv) == 2):
+#     filename = sys.argv[1]
+# elif (len(sys.argv) > 2):
+#     print("Usage: python script.py <filename>")
+#     sys.exit(1)
 
-print(f"beginning with {filename}")
+# print(f"beginning with {filename}")
 
-pa = PolygonAnimator()
-pa.animate(filename)
+# polygons = PolygonDataLoader.load_from_file(filename)
+# pa = PolygonAnimator(polygons)
+# pa.animate()
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Polygon Animator')
+    parser.add_argument('filename', nargs='?', default='polygons.txt', help='Input file containing polygon data')
+    args = parser.parse_args()
+    print(f"{args.filename}")
+    logging.info(f"Beginning with {args.filename}")
+
+    pa = PolygonAnimator(args.filename)
+    pa.animate()
+
+if __name__ == "__main__":
+    main()
