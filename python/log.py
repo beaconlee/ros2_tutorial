@@ -22,6 +22,8 @@ class ColoredFormatter(logging.Formatter):
         }
 
     def format(self, record):
+        # 对齐日志级别，固定宽度为 8（比如 'CRITICAL' 是 8 个字符）
+        record.levelname = record.levelname.ljust(8)
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
