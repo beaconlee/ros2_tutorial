@@ -52,7 +52,9 @@ class CustomLogger:
             # 如果不加 % 和 s 的话不会格式化替换输出
             # log_format = "{asctime} - {levelname} - {filename}:{lineno} - {message}"
             log_format = "%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
-            formatter = ColoredFormatter(fmt=log_format)
+            date_format = "%Y-%m-%d %H:%M:%S"  # 设置不显示毫秒
+
+            formatter = ColoredFormatter(fmt=log_format, datefmt=date_format)
 
             # 将格式器添加到处理器
             console_handler.setFormatter(formatter)
