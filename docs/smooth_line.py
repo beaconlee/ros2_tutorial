@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
+from log import CustomLogger
+import logging
 import csv
 import os
 import json
@@ -16,7 +17,10 @@ from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('TkAgg')
+log = CustomLogger('beacon')
+log.set_loglevel(logging.DEBUG)
 
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s==>%(levelname)s [%(filename)s:%(lineno)d]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 class TopoMapCsv:
   def __init__(self, names, predecessors, successors, left_widths, right_widths):
@@ -29,12 +33,12 @@ class TopoMapCsv:
 
   # 添加一个 debug 函数来输出所有数据
   def debug(self):
-    print(f'TopoMapCsv Data:')
-    print(f'Names: {self.names}')
-    print(f'Predecessors: {self.predecessors}')
-    print(f'Successors: {self.successors}')
-    print(f'Left Widths: {self.left_widths}')
-    print(f'Right Widths: {self.right_widths}')
+    log.debug(f'TopoMapCsv Data:')
+    log.debug(f'Names: {self.names}')
+    log.debug(f'Predecessors: {self.predecessors}')
+    log.debug(f'Successors: {self.successors}')
+    log.debug(f'Left Widths: {self.left_widths}')
+    log.debug(f'Right Widths: {self.right_widths}')
 
 
 class utils:
@@ -92,9 +96,8 @@ class LaneData:
     self.is_junction_lane = False
     self.junction_idx = []
     self.junction_points = []
-    self.junction_start_center_point = None
-    self.junction_end_center_point = None
-    print(f'LaneDat:[{self.name}], junction_points:{self.junction_points}, type:{type(self.junction_points)}')
+    self.junction_center_point = None
+    # self.junction_end_center_point = None
 
     if points is not None and len(points) != 0:
       self.sample_point(points)
@@ -123,7 +126,6 @@ class LaneData:
     self.left_width = topomap_csv.left_widths[index]
     self.right_width = topomap_csv.right_widths[index]
     self.width = self.left_width + self.right_width
-    # print(f'self.width:{self.width}')
 
   def sample_point(self, points):
     last_point = points[0]
@@ -211,7 +213,6 @@ class LaneData:
   def get_min_bounding_circle(self, points):
     # lambda p: p[0] 表示取每个点的第一个元素，即 x 坐标。
     # [0] 表示取出这个点的 x 坐标。
-
     min_x = min(points, key=lambda p: p[0])[0]
     max_x = max(points, key=lambda p: p[0])[0]
     min_y = min(points, key=lambda p: p[1])[1]
@@ -219,12 +220,12 @@ class LaneData:
 
     return [(min_x + max_x) / 2, (min_y + max_y) / 2]
 
-
   def init_junction_lane(self, is_junction_lane, from_points, to_points, width):
     self.is_junction_lane = is_junction_lane
-    self.junction_start_center_point = self.get_min_bounding_circle(from_points)
-    self.junction_end_center_point = self.get_min_bounding_circle(to_points)
+    self.junction_center_point = self.get_min_bounding_circle(from_points)
+    self.junction_center_point = self.get_min_bounding_circle(to_points)
     self.width = width
+    log.info(f'lane{self.name} is junction lane, center_point[{self.junction_center_point}], width[{self.width}]')
 
   def debug(self, ax):
     # x = [point[0] for point in self.origin_points]
@@ -246,13 +247,14 @@ class LaneData:
     # if self.name == 'wai1_guai1':
       # return
 
-    if self.junction_end_center_point is not None:
-      plt.annotate(f'junction[{self.name}]end_center_point[{self.junction_end_center_point[0], self.junction_end_center_point[1]}]', self.junction_end_center_point, xytext=(-30, -30), textcoords='offset points', ha='right', va='bottom', bbox=dict(boxstyle='round, pad=0.5', fc='blue', alpha=0.5), arrowprops=dict(arrowstyle='->', connectionstyle='arc3, rad=0'))
-      plt.annotate(f'junction[{self.name}]start_center_point[{self.junction_end_center_point[0], self.junction_end_center_point[1]}]', self.junction_start_center_point, xytext=(30, 30), textcoords='offset points', ha='right', va='bottom', bbox=dict(boxstyle='round, pad=0.5', fc='green', alpha=0.5), arrowprops=dict(arrowstyle='->', connectionstyle='arc3, rad=0'))
+    if self.junction_center_point is not None:
+      plt.annotate(f'junction[{self.name}]center_point[{self.junction_center_point[0], self.junction_center_point[1]}]', self.junction_center_point, xytext=(-30, -30), textcoords='offset points', ha='right', va='bottom', bbox=dict(boxstyle='round, pad=0.5', fc='blue', alpha=0.5), arrowprops=dict(arrowstyle='->', connectionstyle='arc3, rad=0'))
+
+      # plt.annotate(f'junction[{self.name}]start_center_point[{self.junction_end_center_point[0], self.junction_end_center_point[1]}]', self.junction_center_point, xytext=(30, 30), textcoords='offset points', ha='right', va='bottom', bbox=dict(boxstyle='round, pad=0.5', fc='green', alpha=0.5), arrowprops=dict(arrowstyle='->', connectionstyle='arc3, rad=0'))
 
     if self.is_junction_lane:
       # print(type(self.is_junction_lane))  # 输出: <class 'list'>
-      print(f'LaneData debug: lane:[{self.name}] is junction lane')
+      log.debug(f'LaneData debug: lane:[{self.name}] is junction lane')
 
 
 class Junction:
@@ -269,7 +271,7 @@ class LaneDataManager:
 
 
   def add_lane(self, lane_data):
-    # print(f'add lane name[{lane_data.name}]')
+    log.debug(f'lane data manager add lane name[{lane_data.name}]')
     self.lanes[lane_data.name] = lane_data  # 使用 name 作为键
 
 
@@ -284,34 +286,48 @@ class LaneDataManager:
 
   ## 当前函数所做的工作
   ### 1. 调用车道的 init 函数来初始化所有车道的自身信息:即当前车道的前驱后继,车道宽度等基本属性
+  #####  这一步时, junction 车道中的数据[前驱后继,车道宽等已经设置了]
   ### 2. 如果车道是 junction 车道,则需要初始化 junction 车道, 标明当前车道是 junction 车道,
   ### 3.
   def init(self, topomap_csv):
     for index, name in enumerate(topomap_csv.names):
       self.lanes[name].init(topomap_csv, index)
 
-      ##### 一个重要的观点, self.junctions_info 只会保存那些不是junction的车道信息
+      ##### 一个重要的观点, self.junctions_info 只会保存那些不是 junction 的车道信息
       ##### 也就是说,它保存的是 junction 车道的组成部分, 所以这个是应该在 if 里面的
       ##### start end 分别存放的是这个车道的首尾点与哪些车道的终点和起点相连
-      # print(f'遍历的name:{name}')
       if '_' not in name:
-        self.junctions_info[name] = {}
         # 这个是包含它自身
         ## end 存放的是这个车道的后面有哪些车道
-        self.junctions_info[name]['start'] = [name]
-        self.junctions_info[name]['end'] = [name]
+        if name not in self.junctions_info:
+          log.warning(f'lane[{name}] not in self.junctions_info:[{self.junctions_info.keys()}]')
+          self.junctions_info[name] = {}
+          self.junctions_info[name]['start'] = [name]
+          self.junctions_info[name]['end'] = [name]
         #### 这个 pre 和 suc 都是相对于其它一个车道而言的,
         #### 其它一个车道的 pre 是这个车道,其实就是这个车道后面的一个
         #### 其它一个车道的 suc 是这个车道,其实就是这个车道在别的车道后面,就是这个车道的起点
         for idx, pre_name in enumerate(topomap_csv.predecessors):
+                                  # 排除 junction lane
           if pre_name == name and '_' not in topomap_csv.names[idx]:
-            self.junctions_info[name]['end'].append(topomap_csv.names[idx])
+            # 进一步排除已经添加到 junction_info 的情况
+            if topomap_csv.names[idx] not in self.junctions_info[name]['end']:
+              self.junctions_info[name]['end'].append(topomap_csv.names[idx])
 
         ## start 存放的是这个车道的前面有哪些车道
         for idx, suc_name in enumerate(topomap_csv.successors):
+                                  # 排除 junction lane
+          if name == 'guai2':
+            log.warning(f'suc_name:[{suc_name}]')
+
           if suc_name == name and '_' not in topomap_csv.names[idx]:
-            self.junctions_info[name]['start'].append(topomap_csv.names[idx])
-        print(f'juncitons_info[{name}]:{self.junctions_info[name]}')
+            # 进一步排除已经添加到 junction_info 的情况
+            if name == 'guai2':
+              # log.warning(f'suc_name:[{suc_name}], 找到 guai2 的后继 wai1')
+            if topomap_csv.names[idx] not in self.junctions_info[name]['start']:
+              self.junctions_info[name]['start'].append(topomap_csv.names[idx])
+
+        log.debug(f'current init lane[{name}] is not junction lane, juncitons_info:[{self.junctions_info[name]}]')
         continue
 
       # print(f'name[{name}] is junction lane')
@@ -322,65 +338,85 @@ class LaneDataManager:
       因为,它的端点一定在 name_from 和 name_to 上, 只需要在 name_from 和 name_to 上根据距离去寻找就可以了,
       并且, 从结果来看, junction 的两个端点的中点是相同的, 虽然可能和自己的 junction 比较简单有关, 但是复杂的 junction 应该也是同理的
       """
-      if not utils.check_distance_exceeds(self.lanes[name_from].end_point, 
-                                          self.lanes[name_to].start_point,
-                                          self.junction_threshold):
-        from_points = []
 
-        ##tips 在这里自己犯了很多的错,首先自己没有意识到,这里的起终点转换
-        ## 对于 junction 的起点来说,那么对于junction 的 to 车道来说,就是它的终点
-        # for fname in self.junctions_info[name_from]['start']:
-        for fname in self.junctions_info[name_from]['end']:
-          # print(f'junction[{name}], from:[{fname}]')
-          # 如果是自身的话应该是包含自身的起点而不是自身的终点
-          ## tips 其次自己忽略了,当junction中自身的起点对应的是其它车道的终点问题,导致在计算坐标时,都计算成了起点或终点
-          if fname == name_from:
-            print(f'junction[{name}], from:[{fname}], 获取的原始点的最后一个点')
-            # 应该是采样点
-            # from_points.append(self.lanes[fname].origin_points[-1])
-            from_points.append(self.lanes[fname].sample_points[-1])
-          else:
-            print(f'junction[{name}], from:[{fname}], 获取的原始点的第一个点')
-            # from_points.append(self.lanes[fname].origin_points[0])
-            from_points.append(self.lanes[fname].sample_points[0])
+      # 获取起点和终点的坐标
+      start = self.lanes[name_from].end_point
+      end = self.lanes[name_to].start_point
+      if utils.check_distance_exceeds(start, end, self.junction_threshold):
+        dist = utils.distance(start, end)
+        msg = f'junction:[{name}] distance too large: {dist}, threshold: {self.junction_threshold}'
+        log.critical(msg)
+        raise ValueError(msg)
 
-        to_points = []
-        ## 对于 junction 的终点来说,那么对于junction 的 to 车道来说,就是它的起点
-        # for fname in self.junctions_info[name_to]['end']:
-        for fname in self.junctions_info[name_to]['start']:
-          if fname == name_to:
-            print(f'junction[{name}], to:[{fname}], 获取的原始点的第一个点')
-            # to_points.append(self.lanes[fname].origin_points[0])
-            to_points.append(self.lanes[fname].sample_points[0])
-          else:
-            print(f'junction[{name}], to:[{fname}], 获取的原始点的最后一个点')
-            # to_points.append(self.lanes[fname].origin_points[-1])
-            to_points.append(self.lanes[fname].sample_points[-1])
+      from_points = []
+      from_msg = []
+      ##tips 在这里自己犯了很多的错,首先自己没有意识到,这里的起终点转换
+      ## 对于 junction 的起点来说,那么对于junction 的 to 车道来说,就是它的终点
+      # for fname in self.junctions_info[name_from]['start']:
+      for fname in self.junctions_info[name_from]['end']:
+        # print(f'junction[{name}], from:[{fname}]')
+        # 如果是自身的话应该是包含自身的起点而不是自身的终点
+        ## tips 其次自己忽略了,当junction中自身的起点对应的是其它车道的终点问题,导致在计算坐标时,都计算成了起点或终点
+        if fname == name_from:
+          log.debug(f'from lane[{fname}] in junction[{name}] get the lnae[{fname}] last point')
+          # 应该是采样点
+          # from_points.append(self.lanes[fname].origin_points[-1])
+          from_msg.append(f'{fname} select last point')
+          from_points.append(self.lanes[fname].sample_points[-1])
+        else:
+          log.debug(f'from lane[{fname}] not in junction[{name}] get the lnae[{fname}] first point')
+          # from_points.append(self.lanes[fname].origin_points[0])
+          from_msg.append(f'{fname} select first point')
+          from_points.append(self.lanes[fname].sample_points[0])
+
+      to_points = []
+      to_msg = []
+      ## 对于 junction 的终点来说,那么对于junction 的 to 车道来说,就是它的起点
+      # for fname in self.junctions_info[name_to]['end']:
+      for fname in self.junctions_info[name_to]['start']:
+        if fname == name_to:
+          log.debug(f'to lane[{fname}] in junction[{name}] get the lnae[{fname}] first point')
+          # to_points.append(self.lanes[fname].origin_points[0])
+          to_msg.append(f'{fname} select first point')
+          to_points.append(self.lanes[fname].sample_points[0])
+        else:
+          log.debug(f'to lane[{fname}] not in junction[{name}] get the lnae[{fname}] last point')
+          # to_points.append(self.lanes[fname].origin_points[-1])
+          to_points.append(self.lanes[fname].sample_points[-1])
+          to_msg.append(f'{fname} select last point')
           # to_points.append(self.lanes[fname].origin_points[0])
 
-        # from_widths = [self.lanes[lane_name].width for lane_name in self.junctions_info[name_from]['start']]
-        # print(f'from_widths:{from_widths}') # from_widths:['4.04.0']
-        from_widths = []
-        for flane_name in self.junctions_info[name_from]['start']:
-          from_widths.append(self.lanes[flane_name].width)
-        # from_widths = [self.lanes[lane_name].width ]
-        # print(f'from_widths:{from_widths}') # from_widths:['4.04.0']
-        width = 0.0
-        for width_i in from_widths:
-          if width < width_i:
-            width = width_i
-        
-        # 这里有个问题时,经过上面的遍历, name 已经被赋予新的值了
-        # print(f'调用lane[{name}] 的 init_junction_lane')
-        self.lanes[name].init_junction_lane(True, 
-                                            from_points, 
-                                            to_points,
-                                            width)
+      log.info(f'junction lane[{name}]:\n\t\t[from]{from_msg}, \n\t\t[to  ]{to_msg}')
 
-        self.lanes[name_from].is_connected_junction = True
-        self.lanes[name_to].is_connected_junction = True
-      else:
-        raise ValueError(f'junction:[{name}] distance start to end too large:{utils.distance(self.lanes[name_from].end_point, self.lanes[name_to].start_point)}, threshold:{self.junction_threshold}')
+      # from_widths = [self.lanes[lane_name].width for lane_name in self.junctions_info[name_from]['start']]
+      # print(f'from_widths:{from_widths}') # from_widths:['4.04.0']
+      from_widths = []
+      width_msg = []
+
+      # width_msg.append(f'junction lane[{name}] from lane end junction width:')
+      for flane_name in self.junctions_info[name_from]['end']:
+        from_widths.append(self.lanes[flane_name].width)
+        width_msg.append(f'[{flane_name}:{self.lanes[flane_name].width}]')
+      # from_widths = [self.lanes[lane_name].width ]
+      # print(f'from_widths:{from_widths}') # from_widths:['4.04.0']
+      log.info(f'junction lane[{name}], from{name_from} end junction width:{width_msg}')
+
+      width = 0.0
+      for width_i in from_widths:
+        if width < width_i:
+          width = width_i
+
+      # 这里有个问题时,经过上面的遍历, name 已经被赋予新的值了
+      # print(f'调用lane[{name}] 的 init_junction_lane')
+      # 这里只会设置 junction lane 的中心点,宽度,以及标记当前lane是 junction lane
+      self.lanes[name].init_junction_lane(True, 
+                                          from_points, 
+                                          to_points,
+                                          width)
+
+      self.lanes[name_from].is_connected_junction = True
+      self.lanes[name_to].is_connected_junction = True
+      log.info(f'[{name_from}][{name_to}] is the from/to lane of [{name}]')
   # def init(self, topomap_csv):
   #     # 初始化 predecessors 和 successors 索引
   #   pre_dict = {name: [] for name in topomap_csv.names}
@@ -431,11 +467,12 @@ class LaneDataManager:
   #       self.lanes[name_to].is_connected_junction = True
   #     else:
   #       raise ValueError(f'junction:[{name}] distance start to end too large:'
-  #                       f'{utils.distance(self.lanes[name_from].end_point, self.lanes[name_to].start_point)}, '
-  #                       f'threshold:{self.junction_threshold}')
+  #           f'{utils.distance(self.lanes[name_from].end_point, self.lanes[name_to].start_point)}, '
+  #           f'threshold:{self.junction_threshold}')
 
 
-  # 现在需要做的是:修改连接junction车道的点,以及生成 junction 车道的点
+  # 现在需要做的是:修改连接 junction 车道的点,以及生成 junction 车道的点
+  ## 这个函数的作用是修改 junction lane 前后 lane 的有效 idx, 在实际使用时, 一个 lane 的所有点不会都拿来使用的
   def generate_junction_lane_idx(self):
     for index, name in enumerate(self.topomap_csv.names):
       if '_' not in name:
@@ -444,28 +481,28 @@ class LaneDataManager:
       junction_name = name.split("_")
       name_from = junction_name[0]
       name_to = junction_name[1]
-      junction_center_point = self.lanes[name].junction_end_center_point
+      junction_center_point = self.lanes[name].junction_center_point
 
       cut_dis = self.lanes[name].width * 0.8
-      from_dis = utils.distance(self.lanes[name_from].end_point, self.lanes[name].junction_end_center_point)
+      from_dis = utils.distance(self.lanes[name_from].end_point, self.lanes[name].junction_center_point)
 
-      print(f'cut_dis[{cut_dis}], from_dis[{from_dis}], cut_dis - from_dis[{cut_dis - from_dis}]')
+      log.debug(f'cut_dis[{cut_dis}], from_dis[{from_dis}], cut_dis - from_dis[{cut_dis - from_dis}]')
 
-      to_dis = utils.distance(self.lanes[name_to].start_point, self.lanes[name].junction_end_center_point)
+      to_dis = utils.distance(self.lanes[name_to].start_point, self.lanes[name].junction_center_point)
 
 
       if utils.check_distance_exceeds(self.lanes[name_from].end_point,
             junction_center_point, cut_dis) or utils.check_distance_exceeds(self.lanes[name_to].start_point, 
             junction_center_point, cut_dis):
-        print(f'from:{name_from} to:{name_to} dis to junction_center_point is too large')
+        log.error(f'from:{name_from} to:{name_to} dis to junction_center_point is too large')
         exit(1)
 
 
       ## 针对于 from, 表示当前 name_from 所余留的距离还不够使用, 需要向前遍历
-      print(f'self.lanes[{name_from}].sample_points:[{len(self.lanes[name_from].sample_points)}], idx: {self.lanes[name_from].junction_idx[1]}')
+      log.debug(f'self.lanes[{name_from}].sample_points:[{len(self.lanes[name_from].sample_points)}], idx: {self.lanes[name_from].junction_idx[1]}')
       if not utils.check_distance_exceeds(self.lanes[name_from].sample_points[self.lanes[name_from].junction_idx[1]], self.lanes[name_from].end_point, cut_dis - from_dis):
         # frange = self.lanes[name_from].junction_idx[0], self.lanes[name_from].junction_idx[1][:,-1]
-        print(f'进入到 {name_from}  lane, 范围[{self.lanes[name_from].junction_idx[0], self.lanes[name_from].junction_idx[1]}]')
+        log.debug(f'进入到 {name_from}  lane, 范围[{self.lanes[name_from].junction_idx[0], self.lanes[name_from].junction_idx[1]}]')
         # frange = range(self.lanes[name_from].junction_idx[0], self.lanes[name_from].junction_idx[1])
         # frange = frange[-1]
         # for idx in range(self.lanes[name_from].junction_idx[1], self.lanes[name_from].junction_idx[0]):
@@ -473,24 +510,24 @@ class LaneDataManager:
         for idx in range(self.lanes[name_from].junction_idx[0], self.lanes[name_from].junction_idx[1])[::-1]:
           if utils.check_distance_exceeds(self.lanes[name_from].sample_points[idx], self.lanes[name_from].end_point, cut_dis - from_dis):
             self.lanes[name_from].junction_idx[1] = idx
-            print(f'============================================================')
+            log.debug(f'============================================================')
             break
           # print(f'搜索 name_from: {name_from}idx:[{idx}]')
 
       ## 针对于 to, 表示当前 name_to 所余留的距离还不够使用, 需要向后遍历
       if not utils.check_distance_exceeds(self.lanes[name_to].sample_points[self.lanes[name_to].junction_idx[0]], self.lanes[name_to].start_point, cut_dis - from_dis):
-        print(f'进入到 {name_to}  lane, 范围[{self.lanes[name_to].junction_idx[0], self.lanes[name_to].junction_idx[1]}]')
+        log.debug(f'进入到 {name_to}  lane, 范围[{self.lanes[name_to].junction_idx[0], self.lanes[name_to].junction_idx[1]}]')
         # for idx in range(self.lanes[name_to].junction_idx[0], self.lanes[name_to].junction_idx[1])[:]:
         for idx in range(self.lanes[name_to].junction_idx[0], self.lanes[name_to].junction_idx[1])[:]:
           if utils.check_distance_exceeds(self.lanes[name_to].sample_points[idx], self.lanes[name_to].start_point, cut_dis - from_dis):
             self.lanes[name_to].junction_idx[0] = idx
-            print(f'============================================================')
+            log.debug(f'============================================================')
             break
           # print(f'搜索 name_to:{name_to}idx:[{idx}], dis:[{utils.distance(self.lanes[name_to].sample_points[idx], self.lanes[name_to].start_point)}, cut_dis-from_dis[{cut_dis - from_dis}]]')
 
-      print(f'在 generate_junction_lane_idx 修改之后')
-      print(f'[{name}] name_from: [{name_from}] idx: {self.lanes[name_from].junction_idx[0], self.lanes[name_from].junction_idx[1], self.lanes[name_from].junction_idx[2]}')
-      print(f'[{name}] name_to: [{name_to}] idx: {self.lanes[name_to].junction_idx[0], self.lanes[name_to].junction_idx[1], self.lanes[name_to].junction_idx[2]}')
+      log.debug(f'在 generate_junction_lane_idx 修改之后')
+      log.debug(f'[{name}] name_from: [{name_from}] idx: {self.lanes[name_from].junction_idx[0], self.lanes[name_from].junction_idx[1], self.lanes[name_from].junction_idx[2]}')
+      log.debug(f'[{name}] name_to: [{name_to}] idx: {self.lanes[name_to].junction_idx[0], self.lanes[name_to].junction_idx[1], self.lanes[name_to].junction_idx[2]}')
 
 
   # 在进行填充时会进一步考虑一个问题,会使junction的长度保证在一个范围之内:self.width * 1.3 * 1.5
@@ -513,27 +550,27 @@ class LaneDataManager:
   def fill_junction_lane_points(self):
     for index, name in enumerate(self.topomap_csv.names):
       if '_' in name:
-        print(f'name:{name}')
+        log.debug(f'name:{name}')
         junction_name = name.split("_")
-        print(f'junction_name:{junction_name}')
+        log.debug(f'junction_name:{junction_name}')
         name_from = junction_name[0]
         name_to = junction_name[1]
 
-        print(f'[{name}] name_from[{name_from}] idx: {self.lanes[name_from].junction_idx[1], self.lanes[name_from].junction_idx[2]}')
+        log.debug(f'[{name}] name_from[{name_from}] idx: {self.lanes[name_from].junction_idx[1], self.lanes[name_from].junction_idx[2]}')
         for idx in range(self.lanes[name_from].junction_idx[1], self.lanes[name_from].junction_idx[2]):
           self.lanes[name].junction_points.append(self.lanes[name_from].sample_points[idx])
-        
-        print(f'[{name}] name_to[{name_to}] idx: {0, self.lanes[name_to].junction_idx[0]}')
+
+        log.debug(f'[{name}] name_to[{name_to}] idx: {0, self.lanes[name_to].junction_idx[0]}')
         for idx in range(0, self.lanes[name_to].junction_idx[0]):
           self.lanes[name].junction_points.append(self.lanes[name_to].sample_points[idx])
       else:
-        print(f'非 junction lane:{name}, idx[{self.lanes[name].junction_idx[0], self.lanes[name].junction_idx[1]}]')
+        log.debug(f'非 junction lane:{name}, idx[{self.lanes[name].junction_idx[0], self.lanes[name].junction_idx[1]}]')
         # print(f'******************************************************************************')
         for idx in range(self.lanes[name].junction_idx[0], self.lanes[name].junction_idx[1]):
           # print(f'非 junction lane:{name} 填充了点{self.lanes[name].sample_points[idx]}')
           self.lanes[name].junction_points.append(self.lanes[name].sample_points[idx])
 
-      print(f'[{name}] junction_points len: {len(self.lanes[name].junction_points)}')
+      log.debug(f'[{name}] junction_points len: {len(self.lanes[name].junction_points)}')
 
       inter_points = self.interpolate_points(self.lanes[name].junction_points)
       # print(f'inter_points:[{inter_points}]')
@@ -556,7 +593,7 @@ class LaneDataManager:
         new_yi=f(new_xi)
         for j in range(len(new_xi)):
           new_points.append([new_xi[j], new_yi[j]])
-    print(f'len: {len(points)}')
+    log.debug(f'len: {len(points)}')
     new_points.append(points[-1])
     return new_points
   # def gen_junction_point
@@ -577,6 +614,7 @@ class DataLoad:
       line_data = csv.reader(file)
       for name, predecessor, successor, leftwidth, rightwidth in line_data:
         if name == filter_name:
+          log.debug(f'lane:[{name}] is filtered')
           continue
         else:
           names.append(name)
@@ -584,6 +622,7 @@ class DataLoad:
           successors.append(successor)
           left_widths.append(float(leftwidth))
           right_widths.append(float(rightwidth))
+          log.info(f'read lane:[{name, predecessor, successor, leftwidth, rightwidth}]')
 
     return TopoMapCsv(names, predecessors, successors, left_widths, right_widths)
 
@@ -599,7 +638,7 @@ class DataLoad:
           continue
         xi, yi = map(float, parts)
         points.append([xi, yi])
-
+    log.info(f'load lane[{lane_name}] from {lane_name}.txt, points[{len(points)}]')
     return LaneData(lane_name, points=points)
 
 
@@ -610,12 +649,10 @@ class DataLoad:
     for lane_name in topomap_csv.names:
       # 这里是从 localization 中加载数据, 但 junction 中并没有 localization 数据
       if '_' in lane_name:
+        log.info(f'lane[{lane_name}] is junction lane, don\'t need load points from {lane_name}.txt')
         lane_data = LaneData(lane_name)
-        lane_data_manager.add_lane(lane_data)
-        continue
-
-      lane_data = DataLoad.load_lane_localization_point(lane_name)
-
+      else:
+        lane_data = DataLoad.load_lane_localization_point(lane_name)
       lane_data_manager.add_lane(lane_data)
 
     return lane_data_manager 
@@ -623,6 +660,7 @@ class DataLoad:
 
 
 def main():
+
   fig, ax = plt.subplots()
 
   topomap_csv = DataLoad.load_topomap_csv('/apollo/modules/tools/hd_map/conf/TopoMap.csv', 'Name')
@@ -641,11 +679,17 @@ def main():
   lane_data_manager.fill_junction_lane_points()
 
 
+
   lane_data_manager.debug_all(ax)
 
   plt.legend()
   plt.show()
 
+  log.debug("This is a debug message")
+  log.info("This is an info message")
+  log.warning("This is a warning message")
+  log.error("This is an error message")
+  log.critical("This is a critical message")
 
 
 if __name__ == '__main__':
