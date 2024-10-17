@@ -1,0 +1,22 @@
+trim_info:
+  # guai1 是一个键，它的值是一个列表。这个列表的元素是字典。
+  # 在这个字典中，有两个键：mode 和 point。
+  guai1:
+    - mode: before
+      point:
+        - 426969.394
+        - 3379763.006
+  wai1:
+    - mode: before
+      point:
+        - 426951.391
+        - 3379722.45
+    - mode: after
+      point:
+        - 426967.201
+        - 3379759.273
+  wai2:
+    - mode: after
+      point:
+        - 426950.059
+        - 3379719.43
