@@ -1,0 +1,7 @@
+lane_name, from_name, to_name, left_width, right_width, type
+wai2, none, wai1, 4.0, 4.0, origin
+wai1, "wai2,guai2", guai1, 4.0, 4.0, origin
+guai1, wai1, nei1, 4.0, 40, origin
+nei1, guai1, "nei2,guai2", 4.0, 4.0, origin
+nei2, nei1, none, 4.0, 4.0, origin
+guai2, nei1, wai1, 4.0, 4.0, origin
